@@ -72,6 +72,7 @@ jobs:
           npm ci 
       - name: deploy
         run: |
+          npm install
           zip -j deploy.zip ./*
           aws lambda update-function-code --function-name=${{ env.AWS_FUNC_NAME }} --zip-file=fileb://deploy.zip 
       # At last the AWS CLI command to Update the Zip file with existing One (With Correct Function Name)
