@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+const { format } = require('date-fns');
 
 exports.handler = async (event) => {
   // TODO implement
