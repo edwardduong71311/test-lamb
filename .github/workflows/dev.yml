@@ -13,6 +13,8 @@ on:
 
 env:
   NODE_VERSION: '14.x'
+  REGION: 'us-west-1'
+  AWS_FUNC_NAME: 'Test_Backend'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -38,3 +40,38 @@ jobs:
           npm run build --if-present
           npm run test --if-present
           npm run coverage --if-present
+
+  deploy:
+    name: Deployment
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: npm install, build, and test
+        run: |
+          npm install
+
+      - name: Configure AWS Credentials  
+        uses: aws-actions/configure-aws-credentials@v1 #--> Setup the Credential for the AWS cli
+        with:
+        # Created the Secrets Under the Repo only with These Variables
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} 
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.REGION }} #--> Define Region of the AWS-CLI 
+      - name: npm install
+        env:
+          CI: true
+        run: |
+          npm ci 
+      - name: deploy
+        run: |
+          zip -j deploy.zip ./*
+          aws lambda update-function-code --function-name=${{ env.AWS_FUNC_NAME }} --zip-file=fileb://deploy.zip 
+      # At last the AWS CLI command to Update the Zip file with existing One (With Correct Function Name)
